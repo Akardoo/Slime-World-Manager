@@ -15,4 +15,5 @@ public class LevelData {
     private final int spawnX;
     private final int spawnY;
     private final int spawnZ;
+
 }

@@ -34,4 +34,5 @@ public class CustomWorldData extends WorldData {
     public boolean u() {
         return true;
     }
+
 }

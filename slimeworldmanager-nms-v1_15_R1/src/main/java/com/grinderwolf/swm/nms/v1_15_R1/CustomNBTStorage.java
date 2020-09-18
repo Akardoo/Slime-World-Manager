@@ -1,10 +1,13 @@
 package com.grinderwolf.swm.nms.v1_15_R1;
 
 import com.flowpowered.nbt.CompoundTag;
+
 import com.grinderwolf.swm.api.world.SlimeWorld;
 import com.grinderwolf.swm.nms.CraftSlimeWorld;
+
 import lombok.AccessLevel;
 import lombok.Getter;
+
 import net.minecraft.server.v1_15_R1.*;
 
 import java.io.File;
@@ -39,14 +42,18 @@ public class CustomNBTStorage extends WorldNBTStorage {
 
     @Override
     public void saveWorldData(WorldData worldData, NBTTagCompound nbtTagCompound) {
-        CompoundTag gameRules = (CompoundTag) Converter.convertTag("gamerules", worldData.v().a()).getAsCompoundTag().get();
-        CompoundTag extraData = this.world.getExtraData();
+        Converter.convertTag("gamerules", worldData.v().a()).getAsCompoundTag()
+                .ifPresent(gameRules -> {
 
-        extraData.getValue().remove("gamerules");
+                    CompoundTag extraData = this.world.getExtraData();
 
-        if (!gameRules.getValue().isEmpty()) {
-            extraData.getValue().put("gamerules", gameRules);
-        }
+                    extraData.getValue().remove("gamerules");
+
+                    if (!gameRules.getValue().isEmpty()) {
+                        extraData.getValue().put("gamerules", gameRules);
+                    }
+
+                });
     }
 
     @Override
@@ -72,4 +79,5 @@ public class CustomNBTStorage extends WorldNBTStorage {
     @Override public String[] getSeenPlayers() {
         return new String[0];
     }
+
 }

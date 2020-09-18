@@ -2,24 +2,15 @@ package com.grinderwolf.swm.plugin;
 
 import com.flowpowered.nbt.CompoundMap;
 import com.flowpowered.nbt.CompoundTag;
+
 import com.grinderwolf.swm.api.SlimePlugin;
 import com.grinderwolf.swm.api.exceptions.*;
 import com.grinderwolf.swm.api.loaders.SlimeLoader;
 import com.grinderwolf.swm.api.world.SlimeWorld;
-import com.grinderwolf.swm.api.world.properties.SlimeProperties;
 import com.grinderwolf.swm.api.world.properties.SlimePropertyMap;
 import com.grinderwolf.swm.nms.CraftSlimeWorld;
 import com.grinderwolf.swm.nms.SlimeNMS;
-import com.grinderwolf.swm.nms.v1_10_R1.v1_10_R1SlimeNMS;
-import com.grinderwolf.swm.nms.v1_11_R1.v1_11_R1SlimeNMS;
-import com.grinderwolf.swm.nms.v1_12_R1.v1_12_R1SlimeNMS;
-import com.grinderwolf.swm.nms.v1_13_R1.v1_13_R1SlimeNMS;
-import com.grinderwolf.swm.nms.v1_13_R2.v1_13_R2SlimeNMS;
-import com.grinderwolf.swm.nms.v1_14_R1.v1_14_R1SlimeNMS;
 import com.grinderwolf.swm.nms.v1_15_R1.v1_15_R1SlimeNMS;
-import com.grinderwolf.swm.nms.v1_8_R3.v1_8_R3SlimeNMS;
-import com.grinderwolf.swm.nms.v1_9_R1.v1_9_R1SlimeNMS;
-import com.grinderwolf.swm.nms.v1_9_R2.v1_9_R2SlimeNMS;
 import com.grinderwolf.swm.plugin.commands.CommandManager;
 import com.grinderwolf.swm.plugin.config.*;
 import com.grinderwolf.swm.plugin.loaders.LoaderUtils;
@@ -28,11 +19,14 @@ import com.grinderwolf.swm.plugin.update.Updater;
 import com.grinderwolf.swm.plugin.upgrade.WorldUpgrader;
 import com.grinderwolf.swm.plugin.world.WorldUnlocker;
 import com.grinderwolf.swm.plugin.world.importer.WorldImporter;
+
 import lombok.Getter;
+
 import ninja.leaping.configurate.objectmapping.ObjectMappingException;
+
 import org.bstats.bukkit.Metrics;
+
 import org.bukkit.*;
-import org.bukkit.command.Command;
 import org.bukkit.command.PluginCommand;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -66,12 +60,7 @@ public class SWMPlugin extends JavaPlugin implements SlimePlugin {
 
         LoaderUtils.registerLoaders();
 
-        try {
-            nms = getNMSBridge();
-        } catch (InvalidVersionException ex) {
-            Logging.error(ex.getMessage());
-            return;
-        }
+        nms = new v1_15_R1SlimeNMS();
 
         List<String> erroredWorlds = loadWorlds();
 
@@ -152,36 +141,6 @@ public class SWMPlugin extends JavaPlugin implements SlimePlugin {
         worlds.clear();
     }
 
-    private SlimeNMS getNMSBridge() throws InvalidVersionException {
-        String version = Bukkit.getServer().getClass().getPackage().getName();
-        String nmsVersion = version.substring(version.lastIndexOf('.') + 1);
-
-        switch (nmsVersion) {
-            case "v1_8_R3":
-                return new v1_8_R3SlimeNMS();
-            case "v1_9_R1":
-                return new v1_9_R1SlimeNMS();
-            case "v1_9_R2":
-                return new v1_9_R2SlimeNMS();
-            case "v1_10_R1":
-                return new v1_10_R1SlimeNMS();
-            case "v1_11_R1":
-                return new v1_11_R1SlimeNMS();
-            case "v1_12_R1":
-                return new v1_12_R1SlimeNMS();
-            case "v1_13_R1":
-                return new v1_13_R1SlimeNMS();
-            case "v1_13_R2":
-                return new v1_13_R2SlimeNMS();
-            case "v1_14_R1":
-                return new v1_14_R1SlimeNMS();
-            case "v1_15_R1":
-                return new v1_15_R1SlimeNMS();
-            default:
-                throw new InvalidVersionException(nmsVersion);
-        }
-    }
-
     private List<String> loadWorlds() {
         List<String> erroredWorlds = new ArrayList<>();
         WorldsConfig config = ConfigManager.getWorldConfig();
@@ -232,14 +191,6 @@ public class SWMPlugin extends JavaPlugin implements SlimePlugin {
     }
 
     @Override
-    public SlimeWorld loadWorld(SlimeLoader loader, String worldName, SlimeWorld.SlimeProperties properties) throws UnknownWorldException,
-            IOException, CorruptedWorldException, NewerFormatException, WorldInUseException {
-        Objects.requireNonNull(properties, "Properties cannot be null");
-
-        return loadWorld(loader, worldName, properties.isReadOnly(), propertiesToMap(properties));
-    }
-
-    @Override
     public SlimeWorld loadWorld(SlimeLoader loader, String worldName, boolean readOnly, SlimePropertyMap propertyMap) throws UnknownWorldException, IOException,
             CorruptedWorldException, NewerFormatException, WorldInUseException {
         Objects.requireNonNull(loader, "Loader cannot be null");
@@ -274,13 +225,6 @@ public class SWMPlugin extends JavaPlugin implements SlimePlugin {
     }
 
     @Override
-    public SlimeWorld createEmptyWorld(SlimeLoader loader, String worldName, SlimeWorld.SlimeProperties properties) throws WorldAlreadyExistsException, IOException {
-        Objects.requireNonNull(properties, "Properties cannot be null");
-
-        return createEmptyWorld(loader, worldName, properties.isReadOnly(), propertiesToMap(properties));
-    }
-
-    @Override
     public SlimeWorld createEmptyWorld(SlimeLoader loader, String worldName, boolean readOnly, SlimePropertyMap propertyMap) throws WorldAlreadyExistsException, IOException {
         Objects.requireNonNull(loader, "Loader cannot be null");
         Objects.requireNonNull(worldName, "World name cannot be null");
@@ -299,21 +243,6 @@ public class SWMPlugin extends JavaPlugin implements SlimePlugin {
         Logging.info("World " + worldName + " created in " + (System.currentTimeMillis() - start) + "ms.");
 
         return world;
-    }
-
-    private SlimePropertyMap propertiesToMap(SlimeWorld.SlimeProperties properties) {
-        SlimePropertyMap propertyMap = new SlimePropertyMap();
-
-        propertyMap.setInt(SlimeProperties.SPAWN_X, (int) properties.getSpawnX());
-        propertyMap.setInt(SlimeProperties.SPAWN_Y, (int) properties.getSpawnY());
-        propertyMap.setInt(SlimeProperties.SPAWN_Z, (int) properties.getSpawnZ());
-        propertyMap.setString(SlimeProperties.DIFFICULTY, Difficulty.getByValue(properties.getDifficulty()).name());
-        propertyMap.setBoolean(SlimeProperties.ALLOW_MONSTERS, properties.allowMonsters());
-        propertyMap.setBoolean(SlimeProperties.ALLOW_ANIMALS, properties.allowAnimals());
-        propertyMap.setBoolean(SlimeProperties.PVP, properties.isPvp());
-        propertyMap.setString(SlimeProperties.ENVIRONMENT, properties.getEnvironment());
-
-        return propertyMap;
     }
 
     @Override
@@ -415,4 +344,5 @@ public class SWMPlugin extends JavaPlugin implements SlimePlugin {
 
         loader.saveWorld(worldName, serializedWorld, false);
     }
+
 }

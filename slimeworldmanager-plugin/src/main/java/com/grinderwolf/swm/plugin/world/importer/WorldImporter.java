@@ -78,7 +78,7 @@ public class WorldImporter {
             }
 
             for (File mapFile : dataDir.listFiles((dir, name) -> MAP_FILE_PATTERN.matcher(name).matches())) {
-                maps.add(loadMap(mapFile));
+                loadMap(mapFile).ifPresent(maps::add);
             }
         }
 
@@ -102,15 +102,29 @@ public class WorldImporter {
                 maps, worldVersion, propertyMap, false, true);
     }
 
-    private static CompoundTag loadMap(File mapFile) throws IOException {
+    private static Optional<CompoundTag> loadMap(File mapFile) throws IOException {
         String fileName = mapFile.getName();
         int mapId = Integer.parseInt(fileName.substring(4, fileName.length() - 4));
 
         NBTInputStream nbtStream = new NBTInputStream(new FileInputStream(mapFile), NBTInputStream.GZIP_COMPRESSION, ByteOrder.BIG_ENDIAN);
-        CompoundTag tag = nbtStream.readTag().getAsCompoundTag().get().getAsCompoundTag("data").get();
+
+        Optional<CompoundTag> tagOptional = nbtStream.readTag().getAsCompoundTag();
+
+        if (!tagOptional.isPresent()) {
+            return Optional.empty();
+        }
+
+        Optional<CompoundTag> dataTagOptional = tagOptional.get().getAsCompoundTag("data");
+
+        if (!dataTagOptional.isPresent()) {
+            return Optional.empty();
+        }
+
+        CompoundTag tag = dataTagOptional.get();
+
         tag.getValue().put("id", new IntTag("id", mapId));
 
-        return tag;
+        return Optional.of(tag);
     }
 
     private static LevelData readLevelData(File file) throws IOException, InvalidWorldException {
@@ -128,8 +142,16 @@ public class WorldImporter {
                 Map<String, String> gameRules = new HashMap<>();
                 Optional<CompoundTag> rulesList = dataTag.get().getAsCompoundTag("GameRules");
 
-                rulesList.ifPresent(compoundTag -> compoundTag.getValue().forEach((ruleName, ruleTag) ->
-                        gameRules.put(ruleName, ruleTag.getAsStringTag().get().getValue())));
+                rulesList
+                        .ifPresent(compoundTag ->
+                                compoundTag
+                                        .getValue()
+                                        .forEach((ruleName, ruleTag) ->
+                                                ruleTag
+                                                        .getAsStringTag()
+                                                        .ifPresent(stringTag -> gameRules.put(ruleName, stringTag.getValue()))
+                                        )
+                        );
 
                 int spawnX = dataTag.get().getIntValue("SpawnX").orElse(0);
                 int spawnY = dataTag.get().getIntValue("SpawnY").orElse(255);
@@ -159,7 +181,7 @@ public class WorldImporter {
             }
         }
 
-        List<SlimeChunk> loadedChunks = chunks.stream().map((entry) -> {
+        return chunks.stream().map((entry) -> {
 
             try {
                 DataInputStream headerStream = new DataInputStream(new ByteArrayInputStream(regionByteArray, entry.getOffset(), entry.getPaddedSize()));
@@ -185,13 +207,13 @@ public class WorldImporter {
             }
 
         }).filter(Objects::nonNull).collect(Collectors.toList());
-
-        return loadedChunks;
     }
 
+    @SuppressWarnings("unchecked")
     private static SlimeChunk readChunk(CompoundTag compound, byte worldVersion) {
         int chunkX = compound.getAsIntTag("xPos").get().getValue();
         int chunkZ = compound.getAsIntTag("zPos").get().getValue();
+
         Optional<String> status = compound.getStringValue("Status");
 
         if (status.isPresent() && !status.get().equals("postprocessed") && !status.get().startsWith("full")) {
@@ -200,7 +222,8 @@ public class WorldImporter {
         }
 
         int[] biomes;
-        Tag biomesTag = compound.getValue().get("Biomes");
+
+        Tag<?> biomesTag = compound.getValue().get("Biomes");
 
         if (biomesTag instanceof IntArrayTag) {
             biomes = ((IntArrayTag) biomesTag).getValue();
@@ -317,4 +340,5 @@ public class WorldImporter {
         private final int paddedSize;
 
     }
+
 }

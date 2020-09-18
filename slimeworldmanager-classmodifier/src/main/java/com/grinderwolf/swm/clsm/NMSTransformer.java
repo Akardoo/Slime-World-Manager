@@ -30,8 +30,9 @@ public class NMSTransformer implements ClassFileTransformer {
     private static final Pattern PATTERN = Pattern.compile("^(\\w+)\\s*\\((.*?)\\)\\s*@(.+?\\.txt)$");
     private static final boolean DEBUG = Boolean.getBoolean("clsmDebug");
 
-    private static Map<String, Change[]> changes = new HashMap<>();
+    private static final Map<String, Change[]> CHANGES = new HashMap<>();
 
+    @SuppressWarnings("unchecked")
     public static void premain(String agentArgs, Instrumentation instrumentation) {
         instrumentation.addTransformer(new NMSTransformer());
 
@@ -99,17 +100,17 @@ public class NMSTransformer implements ClassFileTransformer {
                         System.out.println("Loaded " + changeArray.length + " changes for class " + clazz + ".");
                     }
 
-                    Change[] oldChanges = changes.get(clazz);
+                    Change[] oldChanges = CHANGES.get(clazz);
 
                     if (oldChanges == null) {
-                        changes.put(clazz, changeArray);
+                        CHANGES.put(clazz, changeArray);
                     } else {
                         Change[] newChanges = new Change[oldChanges.length + changeArray.length];
 
                         System.arraycopy(oldChanges, 0, newChanges, 0, oldChanges.length);
                         System.arraycopy(changeArray, 0, newChanges, oldChanges.length, changeArray.length);
 
-                        changes.put(clazz, newChanges);
+                        CHANGES.put(clazz, newChanges);
                     }
                 }
             }
@@ -136,7 +137,7 @@ public class NMSTransformer implements ClassFileTransformer {
     @Override
     public byte[] transform(ClassLoader classLoader, String className, Class<?> classBeingTransformed, ProtectionDomain protectionDomain, byte[] bytes) {
         if (className != null) {
-            if (changes.containsKey(className)) {
+            if (CHANGES.containsKey(className)) {
                 String fixedClassName = className.replace("/", ".");
 
                 if (DEBUG) {
@@ -148,7 +149,7 @@ public class NMSTransformer implements ClassFileTransformer {
                     pool.appendClassPath(new LoaderClassPath(classLoader));
                     CtClass ctClass = pool.get(fixedClassName);
 
-                    for (Change change : changes.get(className)) {
+                    for (Change change : CHANGES.get(className)) {
                         CtMethod[] methods = ctClass.getDeclaredMethods(change.getMethodName());
                         boolean found = false;
 
@@ -205,4 +206,5 @@ public class NMSTransformer implements ClassFileTransformer {
         private final boolean optional;
 
     }
+
 }

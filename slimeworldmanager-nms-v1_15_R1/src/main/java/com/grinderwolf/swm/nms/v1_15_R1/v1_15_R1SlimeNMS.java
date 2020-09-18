@@ -91,7 +91,7 @@ public class v1_15_R1SlimeNMS implements SlimeNMS {
 
         DimensionManager actualDimension = DimensionManager.a(env.getId());
         DimensionManager dimensionManager = DimensionManager.register(worldName, new DimensionManager(dimension, actualDimension.getSuffix(),
-                actualDimension.folder, actualDimension.providerFactory::apply, actualDimension.hasSkyLight(), actualDimension
+                actualDimension.folder, actualDimension.providerFactory, actualDimension.hasSkyLight(), actualDimension
                 .getGenLayerZoomer(), actualDimension));
 
         CustomWorldServer server = new CustomWorldServer((CraftSlimeWorld) world, dataManager, dimensionManager, env);
@@ -140,4 +140,5 @@ public class v1_15_R1SlimeNMS implements SlimeNMS {
 
         return (CompoundTag) Converter.convertTag("", newNmsTag);
     }
+
 }

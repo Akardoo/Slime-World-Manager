@@ -32,6 +32,7 @@ public class NMSSlimeChunk implements SlimeChunk {
         return chunk.getPos().z;
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public SlimeChunkSection[] getSections() {
         SlimeChunkSection[] sections = new SlimeChunkSection[16];
@@ -51,7 +52,7 @@ public class NMSSlimeChunk implements SlimeChunk {
                     NibbleArray skyLightArray = Converter.convertArray(lightEngine.a(EnumSkyBlock.SKY).a(SectionPosition.a(chunk.getPos(), sectionId)));
 
                     // Block Data
-                    DataPaletteBlock dataPaletteBlock = section.getBlocks();
+                    DataPaletteBlock<?> dataPaletteBlock = section.getBlocks();
                     NBTTagCompound blocksCompound = new NBTTagCompound();
                     dataPaletteBlock.a(blocksCompound, "Palette", "BlockStates");
                     NBTTagList paletteList = blocksCompound.getList("Palette", 10);
@@ -116,4 +117,5 @@ public class NMSSlimeChunk implements SlimeChunk {
 
         return entities;
     }
+
 }

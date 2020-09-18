@@ -3,14 +3,16 @@ package com.grinderwolf.swm.nms;
 import com.flowpowered.nbt.*;
 import com.flowpowered.nbt.stream.NBTInputStream;
 import com.flowpowered.nbt.stream.NBTOutputStream;
+
 import com.github.luben.zstd.Zstd;
+
 import com.grinderwolf.swm.api.exceptions.WorldAlreadyExistsException;
 import com.grinderwolf.swm.api.loaders.SlimeLoader;
 import com.grinderwolf.swm.api.utils.SlimeFormat;
 import com.grinderwolf.swm.api.world.*;
 import com.grinderwolf.swm.api.world.properties.SlimePropertyMap;
+
 import lombok.*;
-import org.bukkit.Difficulty;
 
 import java.io.*;
 import java.nio.ByteOrder;
@@ -99,21 +101,7 @@ public class CraftSlimeWorld implements SlimeWorld {
         return world;
     }
 
-    @Override
-    public SlimeWorld.SlimeProperties getProperties() {
-        return SlimeWorld.SlimeProperties.builder().spawnX(propertyMap.getInt(com.grinderwolf.swm.api.world.properties.SlimeProperties.SPAWN_X))
-                .spawnY(propertyMap.getInt(com.grinderwolf.swm.api.world.properties.SlimeProperties.SPAWN_Y))
-                .spawnZ(propertyMap.getInt(com.grinderwolf.swm.api.world.properties.SlimeProperties.SPAWN_Z))
-                .environment(propertyMap.getString(com.grinderwolf.swm.api.world.properties.SlimeProperties.ENVIRONMENT))
-                .pvp(propertyMap.getBoolean(com.grinderwolf.swm.api.world.properties.SlimeProperties.PVP))
-                .allowMonsters(propertyMap.getBoolean(com.grinderwolf.swm.api.world.properties.SlimeProperties.ALLOW_MONSTERS))
-                .allowAnimals(propertyMap.getBoolean(com.grinderwolf.swm.api.world.properties.SlimeProperties.ALLOW_ANIMALS))
-                .difficulty(Difficulty.valueOf(propertyMap.getString(com.grinderwolf.swm.api.world.properties.SlimeProperties.DIFFICULTY).toUpperCase()).getValue())
-                .readOnly(readOnly).build();
-    }
-
     // World Serialization methods
-
     public byte[] serialize() {
         List<SlimeChunk> sortedChunks;
 

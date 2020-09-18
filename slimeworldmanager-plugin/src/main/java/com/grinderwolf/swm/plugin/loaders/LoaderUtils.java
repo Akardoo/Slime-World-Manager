@@ -8,7 +8,9 @@ import com.flowpowered.nbt.IntTag;
 import com.flowpowered.nbt.ListTag;
 import com.flowpowered.nbt.TagType;
 import com.flowpowered.nbt.stream.NBTInputStream;
+
 import com.github.luben.zstd.Zstd;
+
 import com.grinderwolf.swm.api.exceptions.CorruptedWorldException;
 import com.grinderwolf.swm.api.exceptions.NewerFormatException;
 import com.grinderwolf.swm.api.loaders.SlimeLoader;
@@ -22,20 +24,17 @@ import com.grinderwolf.swm.nms.CraftSlimeChunkSection;
 import com.grinderwolf.swm.nms.CraftSlimeWorld;
 import com.grinderwolf.swm.plugin.config.ConfigManager;
 import com.grinderwolf.swm.plugin.config.DatasourcesConfig;
-import com.grinderwolf.swm.plugin.loaders.file.FileLoader;
 import com.grinderwolf.swm.plugin.loaders.mongo.MongoLoader;
-import com.grinderwolf.swm.plugin.loaders.mysql.MysqlLoader;
 import com.grinderwolf.swm.plugin.log.Logging;
+
 import com.mongodb.MongoException;
 
 import java.io.ByteArrayInputStream;
 import java.io.DataInputStream;
 import java.io.EOFException;
-import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
-import java.sql.SQLException;
 import java.util.*;
 
 public class LoaderUtils {
@@ -43,25 +42,10 @@ public class LoaderUtils {
     public static final long MAX_LOCK_TIME = 300000L; // Max time difference between current time millis and world lock
     public static final long LOCK_INTERVAL = 60000L;
 
-    private static Map<String, SlimeLoader> loaderMap = new HashMap<>();
+    private static final Map<String, SlimeLoader> LOADER_MAP = new HashMap<>();
 
     public static void registerLoaders() {
         DatasourcesConfig config = ConfigManager.getDatasourcesConfig();
-
-        // File loader
-        DatasourcesConfig.FileConfig fileConfig = config.getFileConfig();
-        registerLoader("file", new FileLoader(new File(fileConfig.getPath())));
-
-        // Mysql loader
-        DatasourcesConfig.MysqlConfig mysqlConfig = config.getMysqlConfig();
-        if (mysqlConfig.isEnabled()) {
-            try {
-                registerLoader("mysql", new MysqlLoader(mysqlConfig));
-            } catch (SQLException ex) {
-                Logging.error("Failed to establish connection to the MySQL server:");
-                ex.printStackTrace();
-            }
-        }
 
         // MongoDB loader
         DatasourcesConfig.MongoDBConfig mongoConfig = config.getMongoDbConfig();
@@ -77,16 +61,16 @@ public class LoaderUtils {
     }
 
     public static List<String> getAvailableLoadersNames() {
-        return new LinkedList<>(loaderMap.keySet());
+        return new LinkedList<>(LOADER_MAP.keySet());
     }
 
 
     public static SlimeLoader getLoader(String dataSource) {
-        return loaderMap.get(dataSource);
+        return LOADER_MAP.get(dataSource);
     }
 
     public static void registerLoader(String dataSource, SlimeLoader loader) {
-        if (loaderMap.containsKey(dataSource)) {
+        if (LOADER_MAP.containsKey(dataSource)) {
             throw new IllegalArgumentException("Data source " + dataSource + " already has a declared loader!");
         }
 
@@ -104,9 +88,10 @@ public class LoaderUtils {
             }
         }
 
-        loaderMap.put(dataSource, loader);
+        LOADER_MAP.put(dataSource, loader);
     }
 
+    @SuppressWarnings("unchecked")
     public static CraftSlimeWorld deserializeWorld(SlimeLoader loader, String worldName, byte[] serializedWorld, SlimePropertyMap propertyMap, boolean readOnly)
             throws IOException, CorruptedWorldException, NewerFormatException {
         DataInputStream dataStream = new DataInputStream(new ByteArrayInputStream(serializedWorld));
@@ -277,9 +262,9 @@ public class LoaderUtils {
             CompoundTag mapsCompound = readCompoundTag(mapsTag);
             List<CompoundTag> mapList;
 
-            if (mapsCompound != null) {
+            if (mapsCompound != null)
                 mapList = (List<CompoundTag>) mapsCompound.getAsListTag("maps").map(ListTag::getValue).orElse(new ArrayList<>());
-            } else {
+            else {
                 mapList = new ArrayList<>();
             }
 

@@ -26,7 +26,7 @@ public class Converter {
         return new NibbleArray(array.asBytes());
     }
 
-    static NBTBase convertTag(Tag tag) {
+    static NBTBase convertTag(Tag<?> tag) {
         try {
             switch (tag.getType()) {
                 case TAG_BYTE:
@@ -71,7 +71,7 @@ public class Converter {
         }
     }
 
-    static Tag convertTag(String name, NBTBase base) {
+    static Tag<?> convertTag(String name, NBTBase base) {
         switch (base.getTypeId()) {
             case 1:
                 return new ByteTag(name, ((NBTTagByte) base).asByte());
@@ -88,9 +88,9 @@ public class Converter {
             case 7:
                 return new ByteArrayTag(name, ((NBTTagByteArray) base).getBytes());
             case 8:
-                return new StringTag(name, ((NBTTagString) base).asString());
+                return new StringTag(name, base.asString());
             case 9:
-                List<Tag> list = new ArrayList<>();
+                List<Tag<?>> list = new ArrayList<>();
                 NBTTagList originalList = ((NBTTagList) base);
 
                 for (NBTBase entry : originalList) {

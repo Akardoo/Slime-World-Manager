@@ -90,4 +90,5 @@ public class Updater implements Listener {
         JsonObject statistics = new JsonParser().parse(content.toString()).getAsJsonObject();
         return statistics.get("name").getAsString();
     }
+
 }

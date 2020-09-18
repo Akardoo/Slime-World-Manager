@@ -21,4 +21,5 @@ public class CraftSlimeChunkSection implements SlimeChunkSection {
 
     private final NibbleArray blockLight;
     private final NibbleArray skyLight;
+
 }

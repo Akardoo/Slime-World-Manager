@@ -267,6 +267,7 @@ public class SWMImporter {
         return loadedChunks;
     }
 
+    @SuppressWarnings("unchecked")
     private static SlimeChunk readChunk(CompoundTag compound, byte worldVersion) {
         int chunkX = compound.getAsIntTag("xPos").get().getValue();
         int chunkZ = compound.getAsIntTag("zPos").get().getValue();
@@ -609,4 +610,5 @@ public class SWMImporter {
 
         return outByteStream.toByteArray();
     }
+
 }

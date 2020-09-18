@@ -19,4 +19,5 @@ public class Logging {
     public static void error(String message) {
         Bukkit.getConsoleSender().sendMessage(CONSOLE_PREFIX + ChatColor.RED + message);
     }
+
 }
